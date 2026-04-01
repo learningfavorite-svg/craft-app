@@ -1,0 +1,198 @@
+.container {
+  min-height: 100vh;
+  background: var(--hmg-light);
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.header {
+  background: var(--hmg-navy);
+  padding: 48px 20px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.backBtn {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.7);
+  font-size: 14px;
+  cursor: pointer;
+  font-family: var(--font-ui);
+}
+
+.title {
+  font-size: 17px;
+  font-weight: 700;
+  color: white;
+  font-family: var(--font-display);
+}
+
+.newBtn {
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--hmg-accent);
+  color: white;
+  border: none;
+  border-radius: var(--radius-full);
+  padding: 6px 14px;
+  cursor: pointer;
+}
+
+.body {
+  padding: 16px;
+}
+
+/* AI CTA */
+.aiBookCta {
+  background: linear-gradient(135deg, var(--hmg-navy), var(--hmg-blue));
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  margin-bottom: 20px;
+  color: white;
+}
+
+.aiCtaIcon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.aiCtaTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
+}
+
+.aiCtaSub {
+  font-size: 11px;
+  color: rgba(255,255,255,0.6);
+  margin-top: 2px;
+}
+
+/* Sections */
+.section {
+  margin-bottom: 20px;
+}
+
+.sectionTitle {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--hmg-navy);
+  margin-bottom: 10px;
+}
+
+/* Empty state */
+.empty {
+  background: white;
+  border-radius: var(--radius-lg);
+  padding: 30px 20px;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+}
+
+.emptyIcon {
+  font-size: 36px;
+  margin-bottom: 8px;
+}
+
+.emptyText {
+  font-size: 14px;
+  color: var(--hmg-muted);
+  margin-bottom: 14px;
+}
+
+.emptyBtn {
+  background: var(--hmg-accent);
+  color: white;
+  border: none;
+  border-radius: var(--radius-full);
+  padding: 8px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Appointment Cards */
+.aptCard {
+  background: white;
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  box-shadow: var(--shadow-sm);
+  border-left: 3px solid;
+}
+
+.aptDateBox {
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.aptDay {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.aptMonth {
+  font-size: 10px;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.aptInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.aptDoctor {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--hmg-navy);
+}
+
+.aptSpec {
+  font-size: 12px;
+  color: var(--hmg-muted);
+  margin-top: 2px;
+}
+
+.aptComplaint {
+  font-size: 11px;
+  color: var(--hmg-navy);
+  margin-top: 5px;
+  padding: 4px 8px;
+  background: rgba(0,0,0,0.03);
+  border-radius: 4px;
+}
+
+.aptNotes {
+  font-size: 11px;
+  color: var(--hmg-muted);
+  margin-top: 5px;
+  font-style: italic;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.aptStatus {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+  white-space: nowrap;
+  align-self: flex-start;
+}

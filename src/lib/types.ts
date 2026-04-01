@@ -7,6 +7,7 @@ export interface Doctor {
   available: boolean;
   avatar: string;
   avatarColor: string;
+  licenseNo?: string;
 }
 
 export interface Appointment {
@@ -16,8 +17,73 @@ export interface Appointment {
   specialty: string;
   date: string;
   time: string;
-  status: 'upcoming' | 'completed' | 'cancelled';
+  status: 'upcoming' | 'completed' | 'cancelled' | 'no-show';
+  chiefComplaint?: string;
   notes?: string;
+}
+
+export interface Patient {
+  id: string;
+  mrn: string;
+  fullName: string;
+  dateOfBirth: string;
+  gender: string;
+  nationality: string;
+  phone: string;
+  email: string;
+  bloodType: string;
+  allergies: Allergy[];
+  insuranceId?: string;
+}
+
+export interface Allergy {
+  drug: string;
+  reaction: string;
+  severity: 'mild' | 'moderate' | 'severe';
+}
+
+export interface LabResult {
+  id: string;
+  testName: string;
+  resultValue: string;
+  unit: string;
+  referenceLow?: number;
+  referenceHigh?: number;
+  status: 'normal' | 'low' | 'high' | 'critical';
+  orderedBy?: string;
+  resultDate: string;
+  notes?: string;
+  entities?: NEREntity[];
+}
+
+export interface NEREntity {
+  text: string;
+  label: string;
+  start: number;
+  end: number;
+}
+
+export interface Medication {
+  id: string;
+  drugName: string;
+  dosage: string;
+  frequency: string;
+  route: string;
+  startDate: string;
+  endDate?: string;
+  prescriber: string;
+  indication: string;
+  status: 'active' | 'discontinued' | 'completed';
+}
+
+export interface ClinicalNote {
+  id: string;
+  noteType: string;
+  content: string;
+  aiSummary?: string;
+  author: string;
+  createdAt: string;
+  entities?: NEREntity[];
 }
 
 export interface User {

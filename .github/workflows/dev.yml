@@ -16,6 +16,9 @@ jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
     steps:
       - uses: actions/checkout@v4
 
@@ -79,7 +82,67 @@ jobs:
           path: out/
           retention-days: 3
 
-  # ── 4. Electron — NSIS Windows 10/11 installer (.exe) ────────────────────
+  # ── 4. Docker image build & push ─────────────────────────────────────────
+  build-docker:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/hmg-healthcare
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix=sha-,format=short
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/craft_appv2' }}
+            type=raw,value=run-${{ github.run_number }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            HF_TOKEN=${{ secrets.HF_TOKEN }}
+
+      - name: Export Docker image as artifact (tar)
+        if: github.event_name == 'pull_request'
+        run: |
+          docker build -t hmg-healthcare:pr-${{ github.run_number }} \
+            --build-arg HF_TOKEN="${{ secrets.HF_TOKEN }}" .
+          docker save hmg-healthcare:pr-${{ github.run_number }} | gzip > hmg-healthcare-docker.tar.gz
+
+      - name: Upload Docker image artifact (PR only)
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: hmg-healthcare-docker-pr-${{ github.run_number }}
+          path: hmg-healthcare-docker.tar.gz
+          retention-days: 7
+
+  # ── 5. Electron — NSIS Windows 10/11 installer (.exe) ────────────────────
   build-electron:
     name: Build Electron (Windows 10/11 NSIS x64)
     runs-on: windows-latest
@@ -123,11 +186,11 @@ jobs:
           retention-days: 14
           if-no-files-found: error
 
-  # ── 5. Summary ────────────────────────────────────────────────────────────
+  # ── 6. Summary ────────────────────────────────────────────────────────────
   summary:
     name: Pipeline Summary
     runs-on: ubuntu-latest
-    needs: [build-electron]
+    needs: [build-docker, build-electron]
     if: always()
     steps:
       - name: Write summary
@@ -139,7 +202,13 @@ jobs:
           echo "| Lint | ${{ needs.lint.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Unit Tests | ${{ needs.test.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Web Build | ${{ needs.build-web.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Docker Image | ${{ needs.build-docker.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Electron NSIS Win10/11 | ${{ needs.build-electron.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Docker" >> $GITHUB_STEP_SUMMARY
+          echo "- **Registry:** ghcr.io/${{ github.repository_owner }}/hmg-healthcare" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tag:** run-${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Stack:** hmg-app · n8n · postgres:16 · redis:7 · nginx" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Platform" >> $GITHUB_STEP_SUMMARY
           echo "- **Target OS:** Windows 10 / Windows 11 (x64)" >> $GITHUB_STEP_SUMMARY
@@ -151,3 +220,8 @@ jobs:
           echo "- 🧬 emilyalsentzer/Bio_ClinicalBERT — symptom NER" >> $GITHUB_STEP_SUMMARY
           echo "- 🌐 aubmindlab/bert-base-arabertv02 — Arabic NLP + RTL" >> $GITHUB_STEP_SUMMARY
           echo "- 🔬 microsoft/BiomedNLP-BiomedBERT — lab report analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Local Docker (desktop)" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "cp .env.example .env && docker compose up --build" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY

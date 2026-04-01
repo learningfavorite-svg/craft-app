@@ -1,0 +1,568 @@
+.container {
+  min-height: 100vh;
+  background: var(--hmg-light);
+  display: flex;
+  flex-direction: column;
+  max-width: 480px;
+  margin: 0 auto;
+  position: relative;
+}
+
+/* ── Header ────────────────────────────────────────────────────────────────── */
+.header {
+  background: var(--hmg-navy);
+  padding: 48px 20px 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.headerBg {
+  position: absolute;
+  top: -60px;
+  right: -40px;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, rgba(45,125,210,0.3) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+.topBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  position: relative;
+  z-index: 1;
+}
+
+.greetSmall {
+  font-size: 12px;
+  color: rgba(255,255,255,0.6);
+  font-family: var(--font-ui);
+}
+
+.greetName {
+  font-size: 20px;
+  font-weight: 700;
+  color: white;
+  font-family: var(--font-display);
+}
+
+.topActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.alertBtn {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(232,51,90,0.2);
+  border: 1px solid rgba(232,51,90,0.5);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ff4d6d;
+  font-size: 16px;
+}
+
+.alertBadge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 16px;
+  height: 16px;
+  background: var(--hmg-red);
+  color: white;
+  font-size: 9px;
+  font-weight: 700;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatarBtn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--hmg-accent), var(--hmg-teal));
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Patient Card ───────────────────────────────────────────────────────────── */
+.patientCard {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  z-index: 1;
+}
+
+.patientCardLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.patientAvatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--hmg-accent), var(--hmg-teal));
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.patientName {
+  font-size: 15px;
+  font-weight: 600;
+  color: white;
+}
+
+.patientMeta {
+  font-size: 11px;
+  color: rgba(255,255,255,0.55);
+  margin-top: 2px;
+}
+
+.profileBtn {
+  font-size: 11px;
+  color: var(--hmg-accent);
+  background: none;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  padding: 6px 0;
+}
+
+/* ── Body ───────────────────────────────────────────────────────────────────── */
+.body {
+  flex: 1;
+  padding: 16px 16px 0;
+  overflow-y: auto;
+}
+
+/* ── Alert Banner ────────────────────────────────────────────────────────────── */
+.alertBanner {
+  background: linear-gradient(135deg, rgba(232,51,90,0.12), rgba(232,51,90,0.06));
+  border: 1px solid rgba(232,51,90,0.35);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  margin-bottom: 16px;
+}
+
+.alertBannerIcon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.alertBannerTitle {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--hmg-red);
+}
+
+.alertBannerSub {
+  font-size: 11px;
+  color: var(--hmg-muted);
+  margin-top: 2px;
+}
+
+.alertBannerArrow {
+  margin-left: auto;
+  color: var(--hmg-red);
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+/* ── Stats Grid ──────────────────────────────────────────────────────────────── */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.statCard {
+  background: white;
+  border-radius: var(--radius-md);
+  padding: 12px 8px;
+  text-align: center;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--transition);
+}
+
+.statCard:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.statIcon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  margin: 0 auto 6px;
+}
+
+.statIconBlue { background: var(--hmg-accent-15); }
+.statIconTeal { background: var(--hmg-teal-15); }
+.statIconGold { background: var(--hmg-gold-15); }
+.statIconNavy { background: var(--hmg-blue-20); }
+.statIconRed { background: rgba(232,51,90,0.12); }
+
+.statValue {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--hmg-navy);
+  line-height: 1;
+}
+
+.statLabel {
+  font-size: 9px;
+  color: var(--hmg-muted);
+  margin-top: 3px;
+  line-height: 1.2;
+}
+
+/* ── AI CTA ─────────────────────────────────────────────────────────────────── */
+.aiCta {
+  background: linear-gradient(135deg, var(--hmg-navy), var(--hmg-blue));
+  border-radius: var(--radius-lg);
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow-md);
+}
+
+.aiCtaLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.aiPulse {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--hmg-accent), var(--hmg-teal));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 16px;
+  flex-shrink: 0;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(45,125,210,0.5); }
+  50% { box-shadow: 0 0 0 8px rgba(45,125,210,0); }
+}
+
+.aiCtaTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
+}
+
+.aiCtaSub {
+  font-size: 11px;
+  color: rgba(255,255,255,0.6);
+  margin-top: 2px;
+}
+
+.aiCtaArrow {
+  color: rgba(255,255,255,0.7);
+  font-size: 18px;
+}
+
+/* ── Sections ────────────────────────────────────────────────────────────────── */
+.section {
+  margin-bottom: 20px;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.sectionTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--hmg-navy);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+}
+
+.seeAll {
+  font-size: 12px;
+  color: var(--hmg-accent);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+/* ── Next Appointment ─────────────────────────────────────────────────────────── */
+.nextAptCard {
+  background: white;
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: var(--shadow-sm);
+  border-left: 4px solid var(--hmg-accent);
+}
+
+.nextAptDate {
+  background: var(--hmg-accent-15);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.nextAptDay {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--hmg-accent);
+  line-height: 1;
+}
+
+.nextAptMonth {
+  font-size: 11px;
+  color: var(--hmg-accent);
+  text-transform: uppercase;
+}
+
+.nextAptInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.nextAptDoctor {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--hmg-navy);
+}
+
+.nextAptSpec {
+  font-size: 12px;
+  color: var(--hmg-muted);
+  margin-top: 2px;
+}
+
+.nextAptComplaint {
+  font-size: 11px;
+  color: var(--hmg-muted);
+  margin-top: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.statusBadgeUpcoming {
+  font-size: 10px;
+  font-weight: 600;
+  background: var(--hmg-accent-15);
+  color: var(--hmg-accent);
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Lab Results List ─────────────────────────────────────────────────────────── */
+.labList {
+  background: white;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.labRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(0,0,0,0.04);
+}
+
+.labRow:last-child {
+  border-bottom: none;
+}
+
+.labTestName {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--hmg-navy);
+}
+
+.labDate {
+  font-size: 10px;
+  color: var(--hmg-muted);
+  margin-top: 2px;
+}
+
+.labValue {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.labResult {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--hmg-navy);
+}
+
+.labUnit {
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--hmg-muted);
+}
+
+.labBadge {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: var(--radius-full);
+  letter-spacing: 0.3px;
+}
+
+.labBadge_normal { background: rgba(15,155,142,0.12); color: var(--hmg-teal); }
+.labBadge_low { background: rgba(201,149,74,0.15); color: var(--hmg-gold); }
+.labBadge_high { background: rgba(232,51,90,0.12); color: var(--hmg-red); }
+.labBadge_critical { background: rgba(232,51,90,0.2); color: var(--hmg-red); animation: blink 1.5s infinite; }
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* ── Medications List ────────────────────────────────────────────────────────── */
+.medsList {
+  background: white;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.medRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(0,0,0,0.04);
+}
+
+.medRow:last-child {
+  border-bottom: none;
+}
+
+.medIcon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.medInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.medName {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--hmg-navy);
+}
+
+.medDosage {
+  font-weight: 400;
+  color: var(--hmg-muted);
+}
+
+.medFreq {
+  font-size: 11px;
+  color: var(--hmg-muted);
+  margin-top: 2px;
+}
+
+.medStatus {
+  font-size: 10px;
+  font-weight: 600;
+  background: var(--hmg-teal-15);
+  color: var(--hmg-teal);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+}
+
+/* ── Quick Actions ────────────────────────────────────────────────────────────── */
+.quickGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.quickBtn {
+  background: white;
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: var(--radius-md);
+  padding: 14px 6px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--hmg-navy);
+  font-weight: 500;
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition);
+}
+
+.quickBtn:hover {
+  background: var(--hmg-accent-15);
+  border-color: var(--hmg-accent);
+  color: var(--hmg-accent);
+}
+
+.quickBtnIcon {
+  font-size: 20px;
+}

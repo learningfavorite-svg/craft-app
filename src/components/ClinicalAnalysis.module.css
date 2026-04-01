@@ -1,0 +1,448 @@
+.container {
+  min-height: 100vh;
+  background: var(--hmg-light);
+  max-width: 480px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  background: var(--hmg-navy);
+  padding: 48px 20px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.backBtn {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.7);
+  font-size: 14px;
+  cursor: pointer;
+  font-family: var(--font-ui);
+}
+
+.headerCenter {
+  text-align: center;
+}
+
+.title {
+  font-size: 17px;
+  font-weight: 700;
+  color: white;
+  font-family: var(--font-display);
+}
+
+.subtitle {
+  font-size: 10px;
+  color: rgba(255,255,255,0.5);
+  margin-top: 2px;
+}
+
+.aiBadge {
+  font-size: 10px;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--hmg-accent), var(--hmg-teal));
+  color: white;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+}
+
+/* Critical Banner */
+.criticalBanner {
+  background: linear-gradient(135deg, rgba(232,51,90,0.15), rgba(232,51,90,0.08));
+  border-bottom: 1px solid rgba(232,51,90,0.3);
+  padding: 12px 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.criticalIcon {
+  font-size: 18px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.criticalTitle {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--hmg-red);
+}
+
+.criticalDetail {
+  font-size: 11px;
+  color: var(--hmg-muted);
+  margin-top: 2px;
+}
+
+.criticalBtn {
+  margin-left: auto;
+  background: var(--hmg-red);
+  color: white;
+  border: none;
+  border-radius: var(--radius-full);
+  padding: 6px 14px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  background: var(--hmg-navy);
+  padding: 0 16px 16px;
+  gap: 6px;
+}
+
+.tab {
+  flex: 1;
+  padding: 8px 6px;
+  border-radius: var(--radius-full);
+  background: rgba(255,255,255,0.08);
+  border: none;
+  color: rgba(255,255,255,0.6);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-family: var(--font-ui);
+  transition: all var(--transition);
+}
+
+.tabActive {
+  background: var(--hmg-accent);
+  color: white;
+  font-weight: 600;
+}
+
+.tabBadge {
+  background: var(--hmg-red);
+  color: white;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: var(--radius-full);
+}
+
+/* Body */
+.body {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+/* AI Disclaimer */
+.aiDisclaimer {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: var(--hmg-accent-15);
+  border: 1px solid rgba(45,125,210,0.2);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  margin-bottom: 14px;
+  font-size: 11px;
+  color: var(--hmg-muted);
+  line-height: 1.4;
+}
+
+/* Differential Diagnosis */
+.dxCard {
+  background: white;
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  box-shadow: var(--shadow-sm);
+}
+
+.dxHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.dxCondition {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--hmg-navy);
+}
+
+.dxIcd {
+  font-size: 10px;
+  color: var(--hmg-muted);
+  margin-top: 2px;
+}
+
+.dxProb {
+  font-size: 16px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+}
+
+.dxProbHigh { background: rgba(232,51,90,0.12); color: var(--hmg-red); }
+.dxProbMed { background: rgba(201,149,74,0.15); color: var(--hmg-gold); }
+.dxProbLow { background: rgba(15,155,142,0.12); color: var(--hmg-teal); }
+
+.dxBar {
+  height: 4px;
+  background: rgba(0,0,0,0.06);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.dxBarFill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width 0.5s ease;
+}
+
+.dxBarHigh { background: var(--hmg-red); }
+.dxBarMed { background: var(--hmg-gold); }
+.dxBarLow { background: var(--hmg-teal); }
+
+.dxEvidence {
+  font-size: 11px;
+  color: var(--hmg-muted);
+}
+
+.bookConsultBtn {
+  width: 100%;
+  background: linear-gradient(135deg, var(--hmg-navy), var(--hmg-blue));
+  color: white;
+  border: none;
+  border-radius: var(--radius-lg);
+  padding: 14px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 10px;
+  font-family: var(--font-ui);
+}
+
+/* Lab Summary Row */
+.labSummaryRow {
+  background: white;
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow-sm);
+}
+
+.labSumItem {
+  text-align: center;
+}
+
+.labSumVal {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--hmg-navy);
+}
+
+.labSumNormal { color: var(--hmg-teal); }
+.labSumAbnormal { color: var(--hmg-gold); }
+.labSumCritical { color: var(--hmg-red); }
+
+.labSumLabel {
+  font-size: 10px;
+  color: var(--hmg-muted);
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+/* Lab Detail Cards */
+.labDetailCard {
+  background: white;
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  box-shadow: var(--shadow-sm);
+  border-left: 3px solid;
+}
+
+.labBorder_normal { border-left-color: var(--hmg-teal); }
+.labBorder_low { border-left-color: var(--hmg-gold); }
+.labBorder_high { border-left-color: var(--hmg-red); }
+.labBorder_critical { border-left-color: #c0001a; }
+
+.labDetailHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.labDetailName {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--hmg-navy);
+}
+
+.labDetailDate {
+  font-size: 10px;
+  color: var(--hmg-muted);
+  margin-top: 2px;
+}
+
+.labDetailRight {
+  text-align: right;
+}
+
+.labDetailValue {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--hmg-navy);
+}
+
+.labDetailUnit {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--hmg-muted);
+}
+
+.labStatus {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: var(--radius-full);
+  margin-top: 4px;
+  display: inline-block;
+}
+
+.labStatus_normal { background: rgba(15,155,142,0.12); color: var(--hmg-teal); }
+.labStatus_low { background: rgba(201,149,74,0.15); color: var(--hmg-gold); }
+.labStatus_high { background: rgba(232,51,90,0.12); color: var(--hmg-red); }
+.labStatus_critical { background: rgba(232,51,90,0.25); color: #c0001a; }
+
+.labRef {
+  font-size: 10px;
+  color: var(--hmg-muted);
+  margin-bottom: 4px;
+}
+
+.labNote {
+  font-size: 11px;
+  color: var(--hmg-muted);
+  font-style: italic;
+  margin-bottom: 8px;
+}
+
+/* Range Bar */
+.rangeBar {
+  height: 6px;
+  background: rgba(232,51,90,0.15);
+  border-radius: var(--radius-full);
+  position: relative;
+  overflow: visible;
+  margin-top: 8px;
+}
+
+.rangeNormal {
+  position: absolute;
+  height: 100%;
+  background: rgba(15,155,142,0.3);
+  border-radius: var(--radius-full);
+  top: 0;
+}
+
+.rangeMarker {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  border: 2px solid white;
+  box-shadow: var(--shadow-sm);
+}
+
+.rangeMarker_normal { background: var(--hmg-teal); }
+.rangeMarker_low { background: var(--hmg-gold); }
+.rangeMarker_high { background: var(--hmg-red); }
+.rangeMarker_critical { background: #c0001a; }
+
+/* Notes Tab */
+.noteCard {
+  background: white;
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow-sm);
+}
+
+.noteHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.noteType {
+  font-size: 10px;
+  font-weight: 700;
+  background: var(--hmg-blue-20);
+  color: var(--hmg-blue);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+}
+
+.noteAuthor {
+  font-size: 11px;
+  color: var(--hmg-muted);
+  margin-top: 4px;
+}
+
+.noteDate {
+  font-size: 11px;
+  color: var(--hmg-muted);
+}
+
+.aiSummary {
+  background: var(--hmg-accent-15);
+  border: 1px solid rgba(45,125,210,0.2);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  margin-bottom: 10px;
+}
+
+.aiSummaryLabel {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--hmg-accent);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.aiSummaryText {
+  font-size: 12px;
+  color: var(--hmg-navy);
+  margin-top: 3px;
+  line-height: 1.4;
+}
+
+.noteContent {
+  font-size: 13px;
+  color: var(--hmg-muted);
+  line-height: 1.5;
+}
+
+.emptyNotes {
+  text-align: center;
+  color: var(--hmg-muted);
+  font-size: 14px;
+  padding: 40px 20px;
+}
