@@ -25,13 +25,7 @@
     "react-dom": "^18.3.1",
     "uuid": "^9.0.1"
   },
-  "optionalDependencies": {
-    "better-sqlite3": "^9.4.3",
-    "electron-store": "^8.1.0",
-    "electron-updater": "^6.1.7"
-  },
   "devDependencies": {
-    "@types/better-sqlite3": "^7.6.8",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
@@ -57,25 +51,28 @@
     "files": [
       "out/**/*",
       "electron/**/*",
-      "node_modules/**/*",
       "package.json"
     ],
     "extraMetadata": {
       "main": "electron/main.js"
     },
+    "buildDependenciesFromSource": false,
+    "nodeGypRebuild": false,
+    "npmRebuild": false,
     "win": {
       "target": [{ "target": "nsis", "arch": ["x64"] }],
       "icon": "build/icon.png",
-      "artifactName": "HMG-Healthcare-Setup-v${version}-Windows10-11-x64.exe",
-      "requestedExecutionLevel": "requireAdministrator"
+      "artifactName": "HMG-Healthcare-Setup-v${version}-Windows10-11-x64.exe"
     },
     "nsis": {
       "oneClick": false,
+      "perMachine": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "HMG Healthcare",
-      "deleteAppDataOnUninstall": false
+      "deleteAppDataOnUninstall": false,
+      "runAfterFinish": true
     }
   }
 }
