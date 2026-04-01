@@ -27,13 +27,20 @@ export interface User {
   email: string;
 }
 
+export interface AgentToolCall {
+  id: string;
+  name: string;
+  input: Record<string, unknown>;
+  result?: unknown;
+  status: 'calling' | 'done' | 'error';
+}
+
 export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
-  suggestions?: string[];
-  slots?: TimeSlot[];
+  toolCalls?: AgentToolCall[];
 }
 
 export interface TimeSlot {

@@ -1,16 +1,11 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import type { ChatMessage, Doctor, TimeSlot, Appointment } from '@/lib/types';
-import { bookingChat, isReady } from '@/lib/ai-service';
-import { addAppointment, getDoctors, getSettings } from '@/lib/database';
-import {
-  parseSymptoms,
-  transcribeAudio,
-  isArabicText,
-  processArabicText,
-} from '@/lib/hf-service';
-import type { MedicalEntity } from '@/lib/hf-service';
+import type { ChatMessage, AgentToolCall } from '@/lib/types';
+import { agentChat, isReady, TOOL_LABELS } from '@/lib/ai-service';
+import type { AgentToolEvent, ApiMessage } from '@/lib/ai-service';
+import { getSettings } from '@/lib/database';
+import { transcribeAudio, isArabicText } from '@/lib/hf-service';
 import { v4 as uuidv4 } from 'uuid';
 import styles from './AIBooking.module.css';
 
@@ -20,65 +15,94 @@ interface AIBookingProps {
 }
 
 const SUGGESTIONS = [
-  { label: 'Cardiologist', emoji: '🫀' },
-  { label: 'Neurologist', emoji: '🧠' },
-  { label: 'Orthopedic', emoji: '🦴' },
-  { label: 'Ophthalmologist', emoji: '👁️' },
+  { label: 'I have chest pain', emoji: '🫀' },
+  { label: 'Headache & dizziness', emoji: '🧠' },
+  { label: 'My appointments', emoji: '📅' },
+  { label: 'Analyze lab report', emoji: '🔬' },
 ];
 
 const INITIAL_MESSAGE: ChatMessage = {
   id: 'init-1',
   role: 'assistant',
-  content:
-    "Hello! I'm HMG AI Assistant, here to help you book the right doctor. Could you tell me about your health concern or which specialist you're looking for?",
+  content: "Hello! I'm HMG AI Agent — I can autonomously search doctors, check availability, and book appointments. Just describe your symptoms or tell me what you need.",
   timestamp: new Date(),
 };
+
+function ToolLabel({ name }: { name: string }) {
+  const icons: Record<string, string> = {
+    search_doctors: '🔍',
+    get_availability: '📅',
+    book_appointment: '✅',
+    get_appointment_history: '📋',
+    cancel_appointment: '❌',
+    analyze_symptoms: '🧬',
+    analyze_lab_report: '🔬',
+  };
+  return (
+    <span>
+      {icons[name] ?? '⚙'} {TOOL_LABELS[name] ?? name}
+    </span>
+  );
+}
+
+function ToolFeed({ calls }: { calls: AgentToolCall[] }) {
+  if (!calls.length) return null;
+  return (
+    <div className={styles.toolFeed}>
+      {calls.map((tc) => (
+        <div
+          key={tc.id}
+          className={`${styles.toolItem} ${
+            tc.status === 'done' ? styles.toolDone :
+            tc.status === 'error' ? styles.toolError :
+            styles.toolCalling
+          }`}
+        >
+          <span className={styles.toolIcon}>
+            {tc.status === 'calling' ? <span className={styles.spinnerSm} /> :
+             tc.status === 'error' ? '⚠' : '✓'}
+          </span>
+          <ToolLabel name={tc.name} />
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function AIBooking({ onBack, onOpenSettings }: AIBookingProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([INITIAL_MESSAGE]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [currentDoctor, setCurrentDoctor] = useState<Doctor | null>(null);
-  const [slots, setSlots] = useState<TimeSlot[]>([]);
-  const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
-  const [confirmed, setConfirmed] = useState(false);
+  const [activeCalls, setActiveCalls] = useState<AgentToolCall[]>([]);
   const [isRecording, setIsRecording] = useState(false);
-  const [hfStatus, setHfStatus] = useState<string | null>(null);
-  const [detectedEntities, setDetectedEntities] = useState<MedicalEntity[]>([]);
+  const [voiceStatus, setVoiceStatus] = useState<string | null>(null);
   const [isRTL, setIsRTL] = useState(false);
 
+  // Full API history (includes tool_use + tool_result blocks) — persisted across turns
+  const apiHistoryRef = useRef<ApiMessage[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<BlobPart[]>([]);
 
-  const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, []);
-
   useEffect(() => {
-    scrollToBottom();
-  }, [messages, loading, scrollToBottom]);
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, loading, activeCalls]);
 
-  // Detect RTL based on input text
   useEffect(() => {
     setIsRTL(isArabicText(input));
   }, [input]);
 
-  const getHfToken = useCallback((): string => {
-    try {
-      return getSettings().huggingFaceToken || '';
-    } catch {
-      return '';
-    }
+  const getSettings_ = useCallback(() => {
+    try { return getSettings(); } catch { return { anthropicApiKey: '', huggingFaceToken: '', model: '', language: 'en' as const }; }
   }, []);
 
-  // ── Voice recording (Whisper) ───────────────────────────────────────────────
+  // ── Voice input (Whisper) ────────────────────────────────────────────────
   const startRecording = useCallback(async () => {
-    const token = getHfToken();
-    if (!token) {
-      setHfStatus('Add Hugging Face token in Settings to use voice input');
-      setTimeout(() => setHfStatus(null), 3000);
+    const { huggingFaceToken } = getSettings_();
+    if (!huggingFaceToken) {
+      setVoiceStatus('Add HF token in Settings for voice input');
+      setTimeout(() => setVoiceStatus(null), 3000);
       return;
     }
     try {
@@ -89,29 +113,29 @@ export default function AIBooking({ onBack, onOpenSettings }: AIBookingProps) {
       recorder.onstop = async () => {
         stream.getTracks().forEach((t) => t.stop());
         const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        setHfStatus('Transcribing with Whisper-large-v3…');
+        setVoiceStatus('Transcribing with Whisper-large-v3…');
         try {
-          const text = await transcribeAudio(blob, token);
+          const text = await transcribeAudio(blob, huggingFaceToken);
           if (text) {
             setInput(text);
-            setHfStatus(`Whisper: "${text.slice(0, 60)}${text.length > 60 ? '…' : ''}"`);
+            setVoiceStatus(`"${text.slice(0, 60)}${text.length > 60 ? '…' : ''}"`);
           } else {
-            setHfStatus('No speech detected');
+            setVoiceStatus('No speech detected');
           }
-        } catch (e) {
-          setHfStatus(`Whisper error: ${e instanceof Error ? e.message : 'unknown'}`);
+        } catch {
+          setVoiceStatus('Whisper error — check HF token');
         }
-        setTimeout(() => setHfStatus(null), 4000);
+        setTimeout(() => setVoiceStatus(null), 4000);
       };
       recorder.start();
       mediaRecorderRef.current = recorder;
       setIsRecording(true);
-      setHfStatus('Recording… tap again to stop');
+      setVoiceStatus('Recording… tap again to stop');
     } catch {
-      setHfStatus('Microphone access denied');
-      setTimeout(() => setHfStatus(null), 3000);
+      setVoiceStatus('Microphone access denied');
+      setTimeout(() => setVoiceStatus(null), 3000);
     }
-  }, [getHfToken]);
+  }, [getSettings_]);
 
   const stopRecording = useCallback(() => {
     mediaRecorderRef.current?.stop();
@@ -119,117 +143,71 @@ export default function AIBooking({ onBack, onOpenSettings }: AIBookingProps) {
     setIsRecording(false);
   }, []);
 
-  const handleMic = useCallback(() => {
-    if (isRecording) stopRecording();
-    else startRecording();
-  }, [isRecording, startRecording, stopRecording]);
-
-  // ── Send message (with Bio_ClinicalBERT + AraBERT enrichment) ──────────────
+  // ── Send message → agent loop ─────────────────────────────────────────────
   const sendMessage = useCallback(
     async (text: string) => {
       if (!text.trim() || loading) return;
 
-      const token = getHfToken();
-      let enrichedText = text.trim();
-      let entities: MedicalEntity[] = [];
-
-      // AraBERT: handle Arabic RTL text
-      if (isArabicText(text) && token) {
-        const { processed } = await processArabicText(text, token);
-        enrichedText = processed;
-      }
-
-      // Bio_ClinicalBERT: extract symptom entities to enrich Claude prompt
-      if (token) {
-        try {
-          entities = await parseSymptoms(enrichedText, token);
-          setDetectedEntities(entities);
-          if (entities.length > 0) {
-            const entityStr = entities.map((e) => `${e.word} (${e.entity})`).join(', ');
-            enrichedText = `${enrichedText}\n[Detected medical entities: ${entityStr}]`;
-          }
-        } catch {
-          // Fallback silently — proceed without NER
-        }
-      }
-
       const userMsg: ChatMessage = {
         id: uuidv4(),
         role: 'user',
-        content: text.trim(), // show original text in UI
+        content: text.trim(),
         timestamp: new Date(),
       };
-
       setMessages((prev) => [...prev, userMsg]);
       setInput('');
+      setActiveCalls([]);
       setLoading(true);
 
-      const history = messages.map((m) => ({
-        role: m.role as 'user' | 'assistant',
-        content: m.content,
-      }));
+      const { huggingFaceToken } = getSettings_();
+      const liveToolCalls: AgentToolCall[] = [];
 
-      const doctors = getDoctors();
+      const onToolEvent = (event: AgentToolEvent) => {
+        const call: AgentToolCall = { ...event };
+        const idx = liveToolCalls.findIndex((c) => c.id === event.id);
+        if (idx === -1) {
+          liveToolCalls.push(call);
+        } else {
+          liveToolCalls[idx] = call;
+        }
+        // Trigger re-render with snapshot
+        setActiveCalls([...liveToolCalls]);
+      };
 
       try {
-        const result = await bookingChat(history, enrichedText, doctors);
+        const result = await agentChat(
+          apiHistoryRef.current,
+          text.trim(),
+          huggingFaceToken || '',
+          onToolEvent
+        );
+
+        // Update persistent API history
+        apiHistoryRef.current = result.updatedHistory;
 
         const aiMsg: ChatMessage = {
           id: uuidv4(),
           role: 'assistant',
           content: result.content,
           timestamp: new Date(),
-          slots: result.slots,
+          toolCalls: liveToolCalls.length > 0 ? [...liveToolCalls] : undefined,
         };
-
         setMessages((prev) => [...prev, aiMsg]);
-
-        if (result.suggestedDoctor) {
-          setCurrentDoctor(result.suggestedDoctor);
-          setSlots(result.slots || []);
-          setSelectedSlot(null);
-          setConfirmed(false);
-        }
+      } catch (err) {
+        const aiMsg: ChatMessage = {
+          id: uuidv4(),
+          role: 'assistant',
+          content: `Error: ${err instanceof Error ? err.message : 'Unknown error'}. Please check your API key.`,
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, aiMsg]);
       } finally {
         setLoading(false);
+        setActiveCalls([]);
       }
     },
-    [messages, loading, getHfToken]
+    [loading, getSettings_]
   );
-
-  const handleConfirm = useCallback(() => {
-    if (!currentDoctor || !selectedSlot || confirmed) return;
-
-    const today = new Date();
-    const dateStr = new Date(today.getTime() + 86400000)
-      .toISOString()
-      .split('T')[0];
-
-    const appointment: Appointment = {
-      id: uuidv4(),
-      doctorId: currentDoctor.id,
-      doctorName: currentDoctor.name,
-      specialty: currentDoctor.specialty,
-      date: dateStr,
-      time: selectedSlot,
-      status: 'upcoming',
-    };
-
-    addAppointment(appointment);
-    setConfirmed(true);
-    setDetectedEntities([]);
-
-    const confirmMsg: ChatMessage = {
-      id: uuidv4(),
-      role: 'assistant',
-      content: `Your appointment with ${currentDoctor.name} (${currentDoctor.specialty}) has been confirmed for ${selectedSlot} tomorrow. You'll receive a reminder before your appointment. Is there anything else I can help you with?`,
-      timestamp: new Date(),
-    };
-    setMessages((prev) => [...prev, confirmMsg]);
-    setCurrentDoctor(null);
-    setSlots([]);
-    setSelectedSlot(null);
-  }, [currentDoctor, selectedSlot, confirmed]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -242,26 +220,24 @@ export default function AIBooking({ onBack, onOpenSettings }: AIBookingProps) {
     d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
   const aiReady = isReady();
-  const hfToken = getHfToken();
+  const hfToken = getSettings_().huggingFaceToken;
 
   return (
     <div className={styles.container}>
+      {/* Header */}
       <div className={styles.header}>
-        <button className={styles.backBtn} onClick={onBack} aria-label="Go back">
-          ←
-        </button>
+        <button className={styles.backBtn} onClick={onBack} aria-label="Go back">←</button>
         <div className={styles.aiOrb}>✦</div>
         <div className={styles.headerInfo}>
-          <p className={styles.headerTitle}>HMG AI Assistant</p>
+          <p className={styles.headerTitle}>HMG AI Agent</p>
           <p className={styles.headerSub}>
-            Claude · {hfToken ? 'Whisper · Bio_ClinicalBERT · AraBERT' : 'Add HF token for voice & NER'}
+            Autonomous · 7 tools · {hfToken ? 'Whisper + Bio_ClinicalBERT' : 'Add HF token for NLP'}
           </p>
         </div>
-        <button className={styles.settingsBtn} onClick={onOpenSettings} aria-label="Settings">
-          ⚙
-        </button>
+        <button className={styles.settingsBtn} onClick={onOpenSettings} aria-label="Settings">⚙</button>
       </div>
 
+      {/* Quick suggestions */}
       <div className={styles.suggestions}>
         {SUGGESTIONS.map((s) => (
           <button
@@ -275,43 +251,29 @@ export default function AIBooking({ onBack, onOpenSettings }: AIBookingProps) {
         ))}
       </div>
 
-      {/* HF status bar */}
-      {hfStatus && (
+      {/* Voice status */}
+      {voiceStatus && (
         <div className={styles.hfStatusBar}>
           <span className={styles.hfStatusDot} />
-          {hfStatus}
+          {voiceStatus}
         </div>
       )}
 
-      {/* Detected entities strip */}
-      {detectedEntities.length > 0 && (
-        <div className={styles.entitiesStrip}>
-          <span className={styles.entitiesLabel}>🧬 Bio_ClinicalBERT:</span>
-          {detectedEntities.map((e, i) => (
-            <span key={i} className={styles.entityChip}>
-              {e.word}
-              <span className={styles.entityType}>{e.entity}</span>
-            </span>
-          ))}
-        </div>
-      )}
-
+      {/* Messages */}
       <div className={styles.messages}>
         {messages.map((msg) => (
           <div
             key={msg.id}
-            className={`${styles.msgRow} ${
-              msg.role === 'user' ? styles.msgRowUser : styles.msgRowAI
-            }`}
+            className={`${styles.msgRow} ${msg.role === 'user' ? styles.msgRowUser : styles.msgRowAI}`}
           >
-            {msg.role === 'assistant' && (
-              <div className={styles.msgAvatarSmall}>✦</div>
-            )}
-            <div>
+            {msg.role === 'assistant' && <div className={styles.msgAvatarSmall}>✦</div>}
+            <div className={styles.msgGroup}>
+              {/* Tool feed pinned above the assistant message */}
+              {msg.role === 'assistant' && msg.toolCalls && msg.toolCalls.length > 0 && (
+                <ToolFeed calls={msg.toolCalls} />
+              )}
               <div
-                className={`${styles.bubble} ${
-                  msg.role === 'user' ? styles.bubbleUser : styles.bubbleAI
-                }`}
+                className={`${styles.bubble} ${msg.role === 'user' ? styles.bubbleUser : styles.bubbleAI}`}
                 dir={isArabicText(msg.content) ? 'rtl' : 'ltr'}
               >
                 {msg.content}
@@ -321,61 +283,22 @@ export default function AIBooking({ onBack, onOpenSettings }: AIBookingProps) {
           </div>
         ))}
 
+        {/* Live agent thinking / tool activity */}
         {loading && (
           <div className={`${styles.msgRow} ${styles.msgRowAI}`}>
             <div className={styles.msgAvatarSmall}>✦</div>
-            <div className={`${styles.bubble} ${styles.bubbleAI}`}>
-              <div className={styles.loadingDots}>
-                <span className={styles.loadingDot} />
-                <span className={styles.loadingDot} />
-                <span className={styles.loadingDot} />
-              </div>
-            </div>
-          </div>
-        )}
-
-        {currentDoctor && slots.length > 0 && (
-          <div className={`${styles.msgRow} ${styles.msgRowAI}`}>
-            <div className={styles.msgAvatarSmall}>✦</div>
-            <div>
+            <div className={styles.msgGroup}>
+              {activeCalls.length > 0 && <ToolFeed calls={activeCalls} />}
               <div className={`${styles.bubble} ${styles.bubbleAI}`}>
-                <div className={styles.doctorCard}>
-                  <div className={styles.doctorCardHeader}>
-                    <div
-                      className={styles.doctorCardAvatar}
-                      style={{ background: currentDoctor.avatarColor }}
-                    >
-                      {currentDoctor.avatar}
-                    </div>
-                    <div>
-                      <p className={styles.doctorCardName}>{currentDoctor.name}</p>
-                      <p className={styles.doctorCardSpec}>
-                        {currentDoctor.specialty} · {currentDoctor.hospital}
-                      </p>
-                    </div>
-                    <span className={styles.doctorCardRating}>
-                      ★ {currentDoctor.rating}
-                    </span>
+                {activeCalls.length === 0 ? (
+                  <div className={styles.loadingDots}>
+                    <span className={styles.loadingDot} />
+                    <span className={styles.loadingDot} />
+                    <span className={styles.loadingDot} />
                   </div>
-
-                  <p className={styles.slotsLabel}>Select a time slot</p>
-                  <div className={styles.slotsGrid}>
-                    {slots.map((slot) => (
-                      <button
-                        key={slot.time}
-                        className={`${styles.slot} ${
-                          !slot.available ? styles.slotDisabled : ''
-                        } ${selectedSlot === slot.time ? styles.slotSelected : ''}`}
-                        onClick={() =>
-                          slot.available && setSelectedSlot(slot.time)
-                        }
-                        disabled={!slot.available}
-                      >
-                        {slot.time}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                ) : (
+                  <span className={styles.agentThinking}>Agent reasoning…</span>
+                )}
               </div>
             </div>
           </div>
@@ -384,30 +307,24 @@ export default function AIBooking({ onBack, onOpenSettings }: AIBookingProps) {
         <div ref={messagesEndRef} />
       </div>
 
+      {/* Input area */}
       <div className={styles.inputArea}>
-        {currentDoctor && selectedSlot && (
-          <button className={`btn-teal ${styles.confirmBtn}`} onClick={handleConfirm}>
-            Confirm Appointment →
-          </button>
-        )}
         <div className={styles.inputRow}>
-          {/* Microphone button (Whisper) */}
           <button
             className={`${styles.micBtn} ${isRecording ? styles.micBtnActive : ''}`}
-            onClick={handleMic}
-            aria-label={isRecording ? 'Stop recording' : 'Start voice input'}
-            title={hfToken ? 'Voice input (Whisper)' : 'Add HF token in Settings'}
+            onClick={isRecording ? stopRecording : startRecording}
+            aria-label={isRecording ? 'Stop recording' : 'Voice input'}
+            title={hfToken ? 'Voice input — Whisper-large-v3' : 'Add HF token in Settings'}
           >
             {isRecording ? '⏹' : '🎙'}
           </button>
-
           <textarea
             ref={inputRef}
             className={styles.textInput}
             placeholder={
               aiReady
-                ? 'Describe your symptoms or ask for a specialist… (EN/AR)'
-                : 'Add API key in Settings to enable AI…'
+                ? 'Describe symptoms, ask for a doctor, manage appointments… (EN/AR)'
+                : 'Add Anthropic API key in Settings to enable the AI agent…'
             }
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -417,12 +334,10 @@ export default function AIBooking({ onBack, onOpenSettings }: AIBookingProps) {
             dir={isRTL ? 'rtl' : 'ltr'}
           />
           <button
-            className={`${styles.sendBtn} ${
-              !input.trim() || loading ? styles.sendBtnDisabled : ''
-            }`}
+            className={`${styles.sendBtn} ${!input.trim() || loading ? styles.sendBtnDisabled : ''}`}
             onClick={() => sendMessage(input)}
             disabled={!input.trim() || loading}
-            aria-label="Send message"
+            aria-label="Send"
           >
             ➤
           </button>
