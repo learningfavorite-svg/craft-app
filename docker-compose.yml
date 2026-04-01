@@ -1,5 +1,3 @@
-version: '3.9'
-
 # ── HMG Healthcare Platform — Docker Compose ─────────────────────────────────
 # Layers (per architecture):
 #   hmg-app   → Client / Agentic Core
