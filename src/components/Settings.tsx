@@ -20,9 +20,11 @@ const MODELS = [
 export default function Settings({ settings, onSave, onBack }: SettingsProps) {
   const [form, setForm] = useState<AppSettings>({ ...settings });
   const [showKey, setShowKey] = useState(false);
+  const [showHfKey, setShowHfKey] = useState(false);
   const [saved, setSaved] = useState(false);
 
   const connected = isReady();
+  const hfConnected = !!form.huggingFaceToken;
 
   const handleSave = () => {
     onSave(form);
@@ -45,6 +47,7 @@ export default function Settings({ settings, onSave, onBack }: SettingsProps) {
       </div>
 
       <div className={styles.body}>
+        {/* Anthropic AI */}
         <div className={styles.section}>
           <div className={styles.sectionHeader}>
             <div className={styles.sectionIcon}>🤖</div>
@@ -105,6 +108,69 @@ export default function Settings({ settings, onSave, onBack }: SettingsProps) {
           </div>
         </div>
 
+        {/* Hugging Face */}
+        <div className={styles.section}>
+          <div className={styles.sectionHeader}>
+            <div className={styles.sectionIcon}>🤗</div>
+            <span className={styles.sectionTitle}>Hugging Face</span>
+            <div
+              className={`${styles.statusBadge} ${
+                hfConnected ? styles.statusConnected : styles.statusDisconnected
+              }`}
+            >
+              <span className={styles.statusDot} />
+              {hfConnected ? 'Token set' : 'Not set'}
+            </div>
+          </div>
+          <div className={styles.sectionBody}>
+            <div className={styles.field}>
+              <label className={styles.label}>Access Token</label>
+              <div className={styles.inputWrap}>
+                <input
+                  className={styles.input}
+                  type={showHfKey ? 'text' : 'password'}
+                  placeholder="hf_..."
+                  value={form.huggingFaceToken}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, huggingFaceToken: e.target.value }))
+                  }
+                  autoComplete="off"
+                  spellCheck={false}
+                />
+                <button
+                  className={styles.eyeBtn}
+                  onClick={() => setShowHfKey((v) => !v)}
+                  aria-label={showHfKey ? 'Hide token' : 'Show token'}
+                  type="button"
+                >
+                  {showHfKey ? '🙈' : '👁'}
+                </button>
+              </div>
+              <p className={styles.hint}>
+                Enables voice input (Whisper), symptom NER (Bio_ClinicalBERT),
+                Arabic NLP (AraBERT), and lab report analysis (BiomedBERT).
+                Get token at{' '}
+                <span className={styles.hintLink}>huggingface.co/settings/tokens</span>
+              </p>
+            </div>
+            <div className={styles.hfModels}>
+              {[
+                { icon: '🎙', name: 'Whisper-large-v3', desc: 'Voice to text' },
+                { icon: '🧬', name: 'Bio_ClinicalBERT', desc: 'Symptom NER' },
+                { icon: '🌐', name: 'AraBERT', desc: 'Arabic NLP' },
+                { icon: '🔬', name: 'BiomedBERT', desc: 'Lab reports' },
+              ].map((m) => (
+                <div key={m.name} className={styles.hfModelChip}>
+                  <span>{m.icon}</span>
+                  <span className={styles.hfModelName}>{m.name}</span>
+                  <span className={styles.hfModelDesc}>{m.desc}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Language */}
         <div className={styles.section}>
           <div className={styles.sectionHeader}>
             <div className={styles.sectionIcon}>🌐</div>
@@ -136,6 +202,7 @@ export default function Settings({ settings, onSave, onBack }: SettingsProps) {
           </div>
         </div>
 
+        {/* App Info */}
         <div className={styles.section}>
           <div className={styles.sectionHeader}>
             <div className={styles.sectionIcon}>ℹ</div>
@@ -145,7 +212,7 @@ export default function Settings({ settings, onSave, onBack }: SettingsProps) {
             <div className={styles.appInfo}>
               <div className={styles.infoRow}>
                 <span className={styles.infoLabel}>Version</span>
-                <span className={styles.infoValue}>1.0.0</span>
+                <span className={styles.infoValue}>1.1.0</span>
               </div>
               <div className={styles.infoRow}>
                 <span className={styles.infoLabel}>Platform</span>
@@ -154,6 +221,10 @@ export default function Settings({ settings, onSave, onBack }: SettingsProps) {
               <div className={styles.infoRow}>
                 <span className={styles.infoLabel}>Provider</span>
                 <span className={styles.infoValue}>HMG Healthcare Group</span>
+              </div>
+              <div className={styles.infoRow}>
+                <span className={styles.infoLabel}>AI Models</span>
+                <span className={styles.infoValue}>Claude + HF Inference</span>
               </div>
             </div>
           </div>

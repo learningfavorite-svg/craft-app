@@ -73,6 +73,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   anthropicApiKey: '',
   model: 'claude-sonnet-4-6',
   language: 'en',
+  huggingFaceToken: '',
 };
 
 export function saveSettings(settings: AppSettings): void {

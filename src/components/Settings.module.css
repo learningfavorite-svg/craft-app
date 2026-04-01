@@ -331,3 +331,30 @@
   font-weight: 500;
   color: var(--hmg-navy);
 }
+
+.hfModels {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.hfModelChip {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  background: var(--hmg-light);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(10, 22, 40, 0.06);
+}
+
+.hfModelName {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--hmg-navy);
+}
+
+.hfModelDesc {
+  font-size: 11px;
+  color: var(--hmg-muted);
+}

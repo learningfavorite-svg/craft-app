@@ -481,3 +481,95 @@
   max-width: 260px;
   line-height: 1.5;
 }
+
+/* ── Mic button ─────────────────────────────────────────────────────────── */
+.micBtn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(10, 22, 40, 0.12);
+  background: var(--hmg-white);
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.micBtn:hover {
+  border-color: var(--hmg-accent);
+  background: var(--hmg-accent-15);
+}
+
+.micBtnActive {
+  background: var(--hmg-red, #e8335a);
+  border-color: var(--hmg-red, #e8335a);
+  color: white;
+  animation: pulse 1.2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(232, 51, 90, 0.35); }
+  50%       { box-shadow: 0 0 0 6px rgba(232, 51, 90, 0); }
+}
+
+/* ── HF status bar ──────────────────────────────────────────────────────── */
+.hfStatusBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 16px;
+  background: rgba(45, 125, 210, 0.08);
+  border-bottom: 1px solid rgba(45, 125, 210, 0.12);
+  font-size: 12px;
+  color: var(--hmg-accent);
+  font-weight: 500;
+}
+
+.hfStatusDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--hmg-accent);
+  animation: pulse 1.2s infinite;
+  flex-shrink: 0;
+}
+
+/* ── Entities strip ─────────────────────────────────────────────────────── */
+.entitiesStrip {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 7px 16px;
+  background: rgba(15, 155, 142, 0.06);
+  border-bottom: 1px solid rgba(15, 155, 142, 0.1);
+}
+
+.entitiesLabel {
+  font-size: 11px;
+  color: var(--hmg-teal);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.entityChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 100px;
+  background: rgba(15, 155, 142, 0.1);
+  border: 1px solid rgba(15, 155, 142, 0.2);
+  font-size: 11px;
+  color: var(--hmg-teal);
+  font-weight: 500;
+}
+
+.entityType {
+  font-size: 10px;
+  opacity: 0.7;
+  font-style: italic;
+}

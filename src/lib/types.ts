@@ -45,4 +45,5 @@ export interface AppSettings {
   anthropicApiKey: string;
   model: string;
   language: 'en' | 'ar';
+  huggingFaceToken: string;
 }

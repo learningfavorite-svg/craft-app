@@ -7,12 +7,12 @@
   "author": "HMG Healthcare",
   "license": "MIT",
   "scripts": {
-    "dev": "next dev --webpack",
-    "build": "next build --webpack",
+    "dev": "next dev",
+    "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "electron:dev": "concurrently \"next dev --webpack\" \"wait-on http://localhost:3000 && electron .\"",
-    "electron:build": "next build --webpack && electron-builder",
+    "electron:dev": "concurrently \"next dev\" \"wait-on http://localhost:3000 && electron .\"",
+    "electron:build": "next build && electron-builder",
     "electron:pack": "electron-builder --dir",
     "test": "jest --passWithNoTests"
   },

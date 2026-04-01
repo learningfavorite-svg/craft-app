@@ -3,7 +3,14 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import type { ChatMessage, Doctor, TimeSlot, Appointment } from '@/lib/types';
 import { bookingChat, isReady } from '@/lib/ai-service';
-import { addAppointment, getDoctors } from '@/lib/database';
+import { addAppointment, getDoctors, getSettings } from '@/lib/database';
+import {
+  parseSymptoms,
+  transcribeAudio,
+  isArabicText,
+  processArabicText,
+} from '@/lib/hf-service';
+import type { MedicalEntity } from '@/lib/hf-service';
 import { v4 as uuidv4 } from 'uuid';
 import styles from './AIBooking.module.css';
 
@@ -35,8 +42,15 @@ export default function AIBooking({ onBack, onOpenSettings }: AIBookingProps) {
   const [slots, setSlots] = useState<TimeSlot[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [confirmed, setConfirmed] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [hfStatus, setHfStatus] = useState<string | null>(null);
+  const [detectedEntities, setDetectedEntities] = useState<MedicalEntity[]>([]);
+  const [isRTL, setIsRTL] = useState(false);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<BlobPart[]>([]);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -46,14 +60,103 @@ export default function AIBooking({ onBack, onOpenSettings }: AIBookingProps) {
     scrollToBottom();
   }, [messages, loading, scrollToBottom]);
 
+  // Detect RTL based on input text
+  useEffect(() => {
+    setIsRTL(isArabicText(input));
+  }, [input]);
+
+  const getHfToken = useCallback((): string => {
+    try {
+      return getSettings().huggingFaceToken || '';
+    } catch {
+      return '';
+    }
+  }, []);
+
+  // ── Voice recording (Whisper) ───────────────────────────────────────────────
+  const startRecording = useCallback(async () => {
+    const token = getHfToken();
+    if (!token) {
+      setHfStatus('Add Hugging Face token in Settings to use voice input');
+      setTimeout(() => setHfStatus(null), 3000);
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      audioChunksRef.current = [];
+      recorder.ondataavailable = (e) => audioChunksRef.current.push(e.data);
+      recorder.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
+        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        setHfStatus('Transcribing with Whisper-large-v3…');
+        try {
+          const text = await transcribeAudio(blob, token);
+          if (text) {
+            setInput(text);
+            setHfStatus(`Whisper: "${text.slice(0, 60)}${text.length > 60 ? '…' : ''}"`);
+          } else {
+            setHfStatus('No speech detected');
+          }
+        } catch (e) {
+          setHfStatus(`Whisper error: ${e instanceof Error ? e.message : 'unknown'}`);
+        }
+        setTimeout(() => setHfStatus(null), 4000);
+      };
+      recorder.start();
+      mediaRecorderRef.current = recorder;
+      setIsRecording(true);
+      setHfStatus('Recording… tap again to stop');
+    } catch {
+      setHfStatus('Microphone access denied');
+      setTimeout(() => setHfStatus(null), 3000);
+    }
+  }, [getHfToken]);
+
+  const stopRecording = useCallback(() => {
+    mediaRecorderRef.current?.stop();
+    mediaRecorderRef.current = null;
+    setIsRecording(false);
+  }, []);
+
+  const handleMic = useCallback(() => {
+    if (isRecording) stopRecording();
+    else startRecording();
+  }, [isRecording, startRecording, stopRecording]);
+
+  // ── Send message (with Bio_ClinicalBERT + AraBERT enrichment) ──────────────
   const sendMessage = useCallback(
     async (text: string) => {
       if (!text.trim() || loading) return;
 
+      const token = getHfToken();
+      let enrichedText = text.trim();
+      let entities: MedicalEntity[] = [];
+
+      // AraBERT: handle Arabic RTL text
+      if (isArabicText(text) && token) {
+        const { processed } = await processArabicText(text, token);
+        enrichedText = processed;
+      }
+
+      // Bio_ClinicalBERT: extract symptom entities to enrich Claude prompt
+      if (token) {
+        try {
+          entities = await parseSymptoms(enrichedText, token);
+          setDetectedEntities(entities);
+          if (entities.length > 0) {
+            const entityStr = entities.map((e) => `${e.word} (${e.entity})`).join(', ');
+            enrichedText = `${enrichedText}\n[Detected medical entities: ${entityStr}]`;
+          }
+        } catch {
+          // Fallback silently — proceed without NER
+        }
+      }
+
       const userMsg: ChatMessage = {
         id: uuidv4(),
         role: 'user',
-        content: text.trim(),
+        content: text.trim(), // show original text in UI
         timestamp: new Date(),
       };
 
@@ -69,7 +172,7 @@ export default function AIBooking({ onBack, onOpenSettings }: AIBookingProps) {
       const doctors = getDoctors();
 
       try {
-        const result = await bookingChat(history, text.trim(), doctors);
+        const result = await bookingChat(history, enrichedText, doctors);
 
         const aiMsg: ChatMessage = {
           id: uuidv4(),
@@ -91,7 +194,7 @@ export default function AIBooking({ onBack, onOpenSettings }: AIBookingProps) {
         setLoading(false);
       }
     },
-    [messages, loading]
+    [messages, loading, getHfToken]
   );
 
   const handleConfirm = useCallback(() => {
@@ -114,6 +217,7 @@ export default function AIBooking({ onBack, onOpenSettings }: AIBookingProps) {
 
     addAppointment(appointment);
     setConfirmed(true);
+    setDetectedEntities([]);
 
     const confirmMsg: ChatMessage = {
       id: uuidv4(),
@@ -138,6 +242,7 @@ export default function AIBooking({ onBack, onOpenSettings }: AIBookingProps) {
     d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
   const aiReady = isReady();
+  const hfToken = getHfToken();
 
   return (
     <div className={styles.container}>
@@ -148,7 +253,9 @@ export default function AIBooking({ onBack, onOpenSettings }: AIBookingProps) {
         <div className={styles.aiOrb}>✦</div>
         <div className={styles.headerInfo}>
           <p className={styles.headerTitle}>HMG AI Assistant</p>
-          <p className={styles.headerSub}>Powered by Claude · Always available</p>
+          <p className={styles.headerSub}>
+            Claude · {hfToken ? 'Whisper · Bio_ClinicalBERT · AraBERT' : 'Add HF token for voice & NER'}
+          </p>
         </div>
         <button className={styles.settingsBtn} onClick={onOpenSettings} aria-label="Settings">
           ⚙
@@ -168,6 +275,27 @@ export default function AIBooking({ onBack, onOpenSettings }: AIBookingProps) {
         ))}
       </div>
 
+      {/* HF status bar */}
+      {hfStatus && (
+        <div className={styles.hfStatusBar}>
+          <span className={styles.hfStatusDot} />
+          {hfStatus}
+        </div>
+      )}
+
+      {/* Detected entities strip */}
+      {detectedEntities.length > 0 && (
+        <div className={styles.entitiesStrip}>
+          <span className={styles.entitiesLabel}>🧬 Bio_ClinicalBERT:</span>
+          {detectedEntities.map((e, i) => (
+            <span key={i} className={styles.entityChip}>
+              {e.word}
+              <span className={styles.entityType}>{e.entity}</span>
+            </span>
+          ))}
+        </div>
+      )}
+
       <div className={styles.messages}>
         {messages.map((msg) => (
           <div
@@ -184,6 +312,7 @@ export default function AIBooking({ onBack, onOpenSettings }: AIBookingProps) {
                 className={`${styles.bubble} ${
                   msg.role === 'user' ? styles.bubbleUser : styles.bubbleAI
                 }`}
+                dir={isArabicText(msg.content) ? 'rtl' : 'ltr'}
               >
                 {msg.content}
               </div>
@@ -262,19 +391,30 @@ export default function AIBooking({ onBack, onOpenSettings }: AIBookingProps) {
           </button>
         )}
         <div className={styles.inputRow}>
+          {/* Microphone button (Whisper) */}
+          <button
+            className={`${styles.micBtn} ${isRecording ? styles.micBtnActive : ''}`}
+            onClick={handleMic}
+            aria-label={isRecording ? 'Stop recording' : 'Start voice input'}
+            title={hfToken ? 'Voice input (Whisper)' : 'Add HF token in Settings'}
+          >
+            {isRecording ? '⏹' : '🎙'}
+          </button>
+
           <textarea
             ref={inputRef}
             className={styles.textInput}
             placeholder={
               aiReady
-                ? 'Describe your symptoms or ask for a specialist...'
-                : 'Add API key in Settings to enable AI...'
+                ? 'Describe your symptoms or ask for a specialist… (EN/AR)'
+                : 'Add API key in Settings to enable AI…'
             }
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             rows={1}
             disabled={loading}
+            dir={isRTL ? 'rtl' : 'ltr'}
           />
           <button
             className={`${styles.sendBtn} ${

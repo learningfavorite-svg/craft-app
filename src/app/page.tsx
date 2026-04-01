@@ -8,8 +8,9 @@ import Splash from '@/components/Splash';
 import Home from '@/components/Home';
 import AIBooking from '@/components/AIBooking';
 import Settings from '@/components/Settings';
+import LabReport from '@/components/LabReport';
 
-type View = 'splash' | 'home' | 'booking' | 'settings';
+type View = 'splash' | 'home' | 'booking' | 'settings' | 'lab';
 
 export default function App() {
   const [view, setView] = useState<View>('splash');
@@ -17,6 +18,7 @@ export default function App() {
     anthropicApiKey: '',
     model: 'claude-sonnet-4-6',
     language: 'en',
+    huggingFaceToken: '',
   });
   const [doctors, setDoctors] = useState(getDoctors());
 
@@ -48,6 +50,7 @@ export default function App() {
           doctors={doctors}
           onStartBooking={() => setView('booking')}
           onOpenSettings={() => setView('settings')}
+          onOpenLabReport={() => setView('lab')}
         />
       )}
       {view === 'booking' && (
@@ -61,6 +64,12 @@ export default function App() {
           settings={settings}
           onSave={handleSaveSettings}
           onBack={() => setView('home')}
+        />
+      )}
+      {view === 'lab' && (
+        <LabReport
+          onBack={() => setView('home')}
+          onOpenSettings={() => setView('settings')}
         />
       )}
     </>

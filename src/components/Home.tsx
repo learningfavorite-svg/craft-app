@@ -8,9 +8,10 @@ interface HomeProps {
   doctors: Doctor[];
   onStartBooking: () => void;
   onOpenSettings: () => void;
+  onOpenLabReport: () => void;
 }
 
-export default function Home({ doctors, onStartBooking, onOpenSettings }: HomeProps) {
+export default function Home({ doctors, onStartBooking, onOpenSettings, onOpenLabReport }: HomeProps) {
   const hour = new Date().getHours();
   const greeting = useMemo(() => {
     if (hour < 12) return 'Good Morning';
@@ -62,14 +63,20 @@ export default function Home({ doctors, onStartBooking, onOpenSettings }: HomePr
               <div className={styles.featuredArrow}>→</div>
             </div>
 
-            <div className={styles.actionCard}>
-              <div className={`${styles.actionIcon} ${styles.actionIconBlue}`}>📋</div>
-              <p className={styles.actionTitle}>My Records</p>
-              <p className={styles.actionSub}>View history</p>
+            <div
+              className={styles.actionCard}
+              onClick={onOpenLabReport}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === 'Enter' && onOpenLabReport()}
+            >
+              <div className={`${styles.actionIcon} ${styles.actionIconTeal}`}>🔬</div>
+              <p className={styles.actionTitle}>Lab Report</p>
+              <p className={styles.actionSub}>AI analysis</p>
             </div>
 
             <div className={styles.actionCard}>
-              <div className={`${styles.actionIcon} ${styles.actionIconTeal}`}>📅</div>
+              <div className={`${styles.actionIcon} ${styles.actionIconBlue}`}>📅</div>
               <p className={styles.actionTitle}>Upcoming</p>
               <p className={styles.actionSub}>0 appointments</p>
             </div>

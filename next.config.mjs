@@ -2,6 +2,10 @@
 const nextConfig = {
   output: "standalone",
   experimental: { serverActions: { allowedOrigins: ["localhost:3000"] } },
+  // Expose HF_TOKEN as a public env var for client-side HF Inference calls
+  env: {
+    NEXT_PUBLIC_HF_TOKEN: process.env.HF_TOKEN ?? '',
+  },
   webpack: (config, { isServer }) => {
     if (!isServer) {
       config.resolve.fallback = {
