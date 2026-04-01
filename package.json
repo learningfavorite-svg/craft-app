@@ -12,8 +12,8 @@
     "start": "next start",
     "lint": "eslint",
     "electron:dev": "concurrently \"next dev\" \"wait-on http://localhost:3000 && electron .\"",
-    "electron:build": "next build && electron-builder",
-    "electron:pack": "electron-builder --dir",
+    "electron:build": "next build && electron-builder --win --x64 --publish never",
+    "electron:pack": "next build && electron-builder --dir",
     "test": "jest --passWithNoTests"
   },
   "dependencies": {
@@ -50,17 +50,32 @@
     "wait-on": "^7.2.0"
   },
   "build": {
-    "appId": "com.hmg.app",
-    "productName": "HMG App",
+    "appId": "com.hmg.healthcare.app",
+    "productName": "HMG Healthcare",
+    "copyright": "Copyright © 2025 HMG Healthcare Group",
     "directories": { "output": "dist" },
-    "files": [".next/**/*", "electron/**/*", "public/**/*", "node_modules/**/*", "package.json"],
+    "files": [
+      "out/**/*",
+      "electron/**/*",
+      "node_modules/**/*",
+      "package.json"
+    ],
+    "extraMetadata": {
+      "main": "electron/main.js"
+    },
     "win": {
       "target": [{ "target": "nsis", "arch": ["x64"] }],
-      "icon": "public/icon.png"
+      "icon": "build/icon.png",
+      "artifactName": "HMG-Healthcare-Setup-v${version}-Windows10-11-x64.exe",
+      "requestedExecutionLevel": "requireAdministrator"
     },
     "nsis": {
       "oneClick": false,
-      "allowToChangeInstallationDirectory": true
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "HMG Healthcare",
+      "deleteAppDataOnUninstall": false
     }
   }
 }

@@ -12,8 +12,10 @@
 /out/
 
 # production
-/build
 /dist
+# build assets (icon etc.) are committed; only exclude generated outputs
+/build/*.blockmap
+/build/win-unpacked
 
 # misc
 .DS_Store
